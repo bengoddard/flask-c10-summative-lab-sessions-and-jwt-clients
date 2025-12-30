@@ -7,13 +7,13 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, verify_jwt
 
 @app.before_request
 def check_if_logged_in():
-    open_access_list = [
-        'signup',
-        'login'
-    ]
-
-    if (request.endpoint) not in open_access_list and (not verify_jwt_in_request()):
-        return {'error': '401 Unauthorized'}, 401
+    open_access_list = ['signup', 'login']
+    if request.endpoint in open_access_list:
+        return
+    try:
+        verify_jwt_in_request()
+    except Exception:
+        return make_response(jsonify({'error': 'Missing or invalid token'}), 401)
 
 class Signup(Resource):
     def post(self):

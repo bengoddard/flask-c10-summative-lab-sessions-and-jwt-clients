@@ -63,4 +63,4 @@ class NoteSchema(Schema):
         validate=validate.Length(min=25, error="Content must be at least 25 characters long.")
     )
     user_id = fields.Int()
-    user = fields.Nested(UserSchema(exclude=("entries",)))
+    user = fields.Nested(UserSchema(exclude=("notes",)))
