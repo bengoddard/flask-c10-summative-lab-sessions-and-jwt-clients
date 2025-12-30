@@ -32,7 +32,7 @@ class Signup(Resource):
             db.session.add(user)
             db.session.commit()
             access_token = create_access_token(identity=str(user.id))
-            return make_response(jsonify(token=access_token, user=UserSchema().dump(user)), 200)
+            return make_response(jsonify(token=access_token, user=UserSchema().dump(user)), 201)
         except IntegrityError:
             return {'error': '422 Unprocessable Entity'}, 422
 
@@ -62,8 +62,9 @@ class NoteIndex(Resource):
     def get(self):
         user_id = get_jwt_identity()
         if user_id:
+            notes = Note.query.filter_by(user_id=user_id).all()
             schema = NoteSchema(many=True)
-            return schema.dump(Note.query.all()), 200
+            return schema.dump(notes), 200
         return {'error': '401 Unauthorized'}, 401
 
     def post(self):

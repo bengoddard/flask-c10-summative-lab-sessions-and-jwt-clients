@@ -9,14 +9,10 @@ You will not need to modify this frontend. However, your backend must implement 
 ## Getting Started
 
 1. **Install dependencies**
-   ```bash
-   npm install
-   ```
+   pipenv install
 
 2. **Start the application**
-   ```bash
-   npm start
-   ```
+   flask run
 
 3. **Backend requirements**
    - Backend must be running locally on `http://localhost:3000` OR use a proxy.
@@ -33,7 +29,7 @@ This app manages login, signup, and session persistence through `fetch()` calls 
 
 ### POST `/login`
 
-**Description**: Authenticates an existing user.  
+**Description**: Authenticates an existing user.
 **Headers**:
 ```json
 {
@@ -64,7 +60,7 @@ This app manages login, signup, and session persistence through `fetch()` calls 
 
 ### POST `/signup`
 
-**Description**: Registers a new user and logs them in.  
+**Description**: Registers a new user and logs them in.
 **Headers**:
 ```json
 {
@@ -96,7 +92,7 @@ This app manages login, signup, and session persistence through `fetch()` calls 
 
 ### GET `/me`
 
-**Description**: Retrieves the current authenticated user if a valid JWT is present.  
+**Description**: Retrieves the current authenticated user if a valid JWT is present.
 **Headers**:
 ```json
 {
@@ -113,6 +109,64 @@ This app manages login, signup, and session persistence through `fetch()` calls 
 ```
 
 ---
+
+### GET `/notes`
+
+**Description**: Retrieves all notes that are owned by the current user.
+**Headers**:
+```json
+{
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Response**:
+```json
+{
+  "token": "<JWT string>",
+  "note": {
+    "id": 1,
+    "title": "string",
+    "content": "string",
+  }
+}
+```
+
+---
+
+### POST `/notes`
+
+**Description**: Creates a new note and adds it to the user
+**Headers**:
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <JWT string>"
+}
+```
+
+**Body**:
+```json
+{
+  "title": "string",
+  "content": "string"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Note created successfully",
+  "note": {
+    "id": 1,
+    "title": "string",
+    "content": "string"
+  }
+}
+```
+
+---
+
 
 ## Token Management
 

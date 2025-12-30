@@ -11,7 +11,7 @@ class User(db.Model):
     _password_hash = db.Column(db.String)
     bio = db.Column(db.String)
 
-    entries = db.relationship('Note', back_populates='user')
+    notes = db.relationship('Note', back_populates='user', cascade='all, delete-orphan')
 
     @hybrid_property
     def password_hash(self):
@@ -52,7 +52,7 @@ class UserSchema(Schema):
     bio = fields.Str()
     password = fields.Str(load_only=True, required=True)
 
-    entries = fields.List(fields.Nested(lambda: NoteSchema(exclude=("user",))))
+    notes = fields.List(fields.Nested(lambda: NoteSchema(exclude=("user",))))
 
 
 class NoteSchema(Schema):
