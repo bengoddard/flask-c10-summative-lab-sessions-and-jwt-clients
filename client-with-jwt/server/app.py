@@ -1,9 +1,19 @@
-from flask import request, session
+from flask import request, session, make_response, jsonify
 from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
-
-from config import app, db, api
+from config import app, db, api, jwt
 from models import User, Note, UserSchema, NoteSchema
+from flask_jwt_extended import create_access_token, get_jwt_identity, verify_jwt_in_request
+
+@app.before_request
+def check_if_logged_in():
+    open_access_list = [
+        'signup',
+        'login'
+    ]
+
+    if (request.endpoint) not in open_access_list and (not verify_jwt_in_request()):
+        return {'error': '401 Unauthorized'}, 401
 
 class Signup(Resource):
     def post(self):
@@ -21,15 +31,16 @@ class Signup(Resource):
             user.password_hash = password
             db.session.add(user)
             db.session.commit()
-            session['user_id'] = user.id
-            return UserSchema().dump(user), 201
+            access_token = create_access_token(identity=str(user.id))
+            return make_response(jsonify(token=access_token, user=UserSchema().dump(user)), 200)
         except IntegrityError:
             return {'error': '422 Unprocessable Entity'}, 422
 
-class CheckSession(Resource):
+class WhoAmI(Resource):
     def get(self):
-        if session.get('user_id'):
-            user = User.query.filter(User.id == session['user_id']).first()
+        user_id = get_jwt_identity()
+        if user_id:
+            user = User.query.filter(User.id == user_id).first()
             return UserSchema().dump(user), 200
         return {"error": "Unauthorized"}, 401
 
@@ -42,33 +53,28 @@ class Login(Resource):
         user = User.query.filter(User.username == username).first()
 
         if user and user.authenticate(password):
-            session['user_id'] = user.id
-            return UserSchema().dump(user), 200
+            token = create_access_token(identity=str(user.id))
+            return make_response(jsonify(token=token, user=UserSchema().dump(user)), 200)
 
         return {'error': '401 Unauthorized'}, 401
 
-class Logout(Resource):
-    def delete(self):
-        if session.get('user_id'):
-            session['user_id'] = None
-            return {}, 204
-        return {}, 401
-
-class RecipeIndex(Resource):
+class NoteIndex(Resource):
     def get(self):
-        if session.get('user_id'):
+        user_id = get_jwt_identity()
+        if user_id:
             schema = NoteSchema(many=True)
             return schema.dump(Note.query.all()), 200
         return {'error': '401 Unauthorized'}, 401
 
     def post(self):
         request_json = request.get_json()
-        if session.get('user_id'):
+        user_id = get_jwt_identity()
+        if user_id:
             try:
                 note = Note(
                     title=request_json.get('title'),
                     content=request_json.get('content'),
-                    user_id=session.get('user_id')
+                    user_id=get_jwt_identity()
                 )
                 db.session.add(note)
                 db.session.commit()
@@ -81,10 +87,9 @@ class RecipeIndex(Resource):
 
 
 api.add_resource(Signup, '/signup', endpoint='signup')
-api.add_resource(CheckSession, '/check_session', endpoint='check_session')
+api.add_resource(WhoAmI, '/me', endpoint='me')
 api.add_resource(Login, '/login', endpoint='login')
-api.add_resource(Logout, '/logout', endpoint='logout')
-api.add_resource(RecipeIndex, '/recipes', endpoint='recipes')
+api.add_resource(NoteIndex, '/notes', endpoint='notes')
 
 
 if __name__ == '__main__':
