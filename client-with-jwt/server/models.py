@@ -11,7 +11,7 @@ class User(db.Model):
     _password_hash = db.Column(db.String)
     bio = db.Column(db.String)
 
-    entries = db.relationship('Entry', back_populates='user')
+    entries = db.relationship('Note', back_populates='user')
 
     @hybrid_property
     def password_hash(self):
@@ -30,13 +30,13 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-class Entry(db.Model):
-    __tablename__ = 'entries'
+class Note(db.Model):
+    __tablename__ = 'notes'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     content = db.Column(db.String, nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'))
-    user = db.relationship('User', back_populates="entries")
+    user = db.relationship('User', back_populates="notes")
 
     @validates('content')
     def validate_instructions(self, key, content):
@@ -52,10 +52,10 @@ class UserSchema(Schema):
     bio = fields.Str()
     password = fields.Str(load_only=True, required=True)
 
-    entries = fields.List(fields.Nested(lambda: EntrySchema(exclude=("user",))))
+    entries = fields.List(fields.Nested(lambda: NoteSchema(exclude=("user",))))
 
 
-class EntrySchema(Schema):
+class NoteSchema(Schema):
     id = fields.Int(dump_only=True)
     title = fields.Str(required=True)
     content = fields.Str(
