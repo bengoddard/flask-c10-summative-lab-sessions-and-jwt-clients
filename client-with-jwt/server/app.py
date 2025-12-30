@@ -62,9 +62,22 @@ class NoteIndex(Resource):
     def get(self):
         user_id = get_jwt_identity()
         if user_id:
-            notes = Note.query.filter_by(user_id=user_id).all()
-            schema = NoteSchema(many=True)
-            return schema.dump(notes), 200
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 10, type=int)
+
+            pagination = Note.query.filter_by(user_id=user_id).paginate(
+                page=page,
+                per_page=per_page,
+                error_out=False
+            )
+            return {
+                "total": pagination.total,
+                "pages": pagination.pages,
+                "current_page": pagination.page,
+                "next_page": pagination.next_num,
+                "prev_page": pagination.prev_num,
+                "notes": NoteSchema(many=True).dump(pagination.items)
+            }, 200
         return {'error': '401 Unauthorized'}, 401
 
     def post(self):
@@ -86,11 +99,38 @@ class NoteIndex(Resource):
                 return {"error": str(e)}, 422
         return {'error': '401 Unauthorized'}, 401
 
+class NoteByID(Resource):
+    def patch(self, id):
+        user_id = get_jwt_identity()
+        note = Note.query.filter_by(id=id, user_id=user_id).first()
+        if not note:
+            return {"error": "Note not found"}, 404
+
+        request_json = request.get_json()
+        try:
+            for attr in request_json:
+                setattr(note, attr, request_json[attr])
+            db.session.commit()
+            return NoteSchema().dump(note), 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 422
+
+    def delete(self, id):
+        user_id = get_jwt_identity()
+        note = Note.query.filter_by(id=id, user_id=user_id).first()
+        if not note:
+            return {"error": "Note not found"}, 404
+
+        db.session.delete(note)
+        db.session.commit()
+        return {}, 204
 
 api.add_resource(Signup, '/signup', endpoint='signup')
 api.add_resource(WhoAmI, '/me', endpoint='me')
 api.add_resource(Login, '/login', endpoint='login')
 api.add_resource(NoteIndex, '/notes', endpoint='notes')
+api.add_resource(NoteByID, '/notes/<int:id>', endpoint='note_by_id')
 
 
 if __name__ == '__main__':
