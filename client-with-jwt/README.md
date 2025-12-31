@@ -2,20 +2,23 @@
 
 This React application provides a complete **JWT-based authentication flow** (sign up, log in, session persistence). It is designed to connect to your **Flask backend** and assumes the backend exposes JWT-protected routes.
 
-You will not need to modify this frontend. However, your backend must implement and support the routes described below for this client to work correctly.
-
 ---
 
 ## Getting Started
 
 1. **Install dependencies**
+   npm install
    pipenv install
 
 2. **Start the application**
+   npm start
+
+3. **Start the server**
+   cd server
    flask run
 
-3. **Backend requirements**
-   - Backend must be running locally on `http://localhost:3000` OR use a proxy.
+4. **Backend requirements**
+   - Backend must be running locally on `http://localhost:5000` OR use a proxy.
    - Supports `JWT` via `Bearer <token>` headers.
    - All responses must return JSON.
 
@@ -167,6 +170,57 @@ This app manages login, signup, and session persistence through `fetch()` calls 
 
 ---
 
+### PATCH `/notes/<int:id>`
+
+**Description**: Updates a note by id.
+**Headers**:
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer <JWT string>"
+}
+```
+
+**Body**:
+```json
+{
+  "title": "updated string (optional)",
+  "content": "updated string (optional)"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Note updated successfully",
+  "note": {
+    "id": 1,
+    "title": "updated string",
+    "content": "updated string"
+  }
+}
+```
+
+---
+
+### DELETE `/notes/<int:id>`
+
+**Description**: Deletes a note by id.
+**Headers**:
+```json
+{
+  "Authorization": "Bearer <JWT string>"
+}
+```
+
+**Response**:
+```json
+{
+  "message": "Note deleted successfully"
+}
+```
+
+---
 
 ## Token Management
 
